@@ -40,6 +40,8 @@ from trl import (
     CPOTrainer,
     DPOConfig,
     DPOTrainer,
+    GRPOConfig, 
+    GRPOTrainer,
     KTOConfig,
     KTOTrainer,
     ORPOConfig,
@@ -337,6 +339,11 @@ class AxolotlRewardConfig(AxolotlTrainingMixins, RewardConfig):
     Reward config for Reward training
     """
 
+@dataclass
+class AxolotlGRPOConfig(AxolotlTrainingMixins, GRPOConfig):
+    """
+    GRPO config for GRPO training 
+    """
 
 class SchedulerMixin(Trainer):
     """
@@ -1198,6 +1205,14 @@ class AxolotlRewardTrainer(SchedulerMixin, RewardTrainer):
     """
 
     tag_names = ["axolotl", "reward"]
+
+
+class AxolotlGRPOTrainer(SchedulerMixin, GRPOTrainer):
+    """
+    Extend the base GRPOTrainer for axolotl helpers
+    """
+
+    tag_names = ["axolotl", "grpo"]
 
 
 class TrainerBuilderBase(abc.ABC):
@@ -2071,6 +2086,16 @@ class HFRLTrainerBuilder(TrainerBuilderBase):
 
             training_args_kwargs["dataset_num_proc"] = self.cfg.dataset_processes
             training_args_kwargs["max_length"] = self.cfg.sequence_len
+            if self.cfg.max_prompt_len:
+                training_args_kwargs["max_prompt_length"] = self.cfg.max_prompt_len
+
+        elif self.cfg.rl == "grpo":
+            trainer_cls = AxolotlGRPOTrainer
+            
+            trainer_cls_args = [self.model, self.reward_model]
+            training_args_cls = AxolotlGRPOConfig
+            training_args_kwargs["max_length"] = self.cfg.sequence_len
+            
             if self.cfg.max_prompt_len:
                 training_args_kwargs["max_prompt_length"] = self.cfg.max_prompt_len
 
